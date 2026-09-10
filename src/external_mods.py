@@ -36,7 +36,7 @@ def modrinth_download(instance: str, url: str):
     session = requests.Session()
 
     session.headers.update({
-        "User-Agent": "kolatra/gtnh-updater/0.4 (3821892+kolatra@users.noreply.github.com)"
+        "User-Agent": "kolatra/gtnh-updater/0.4 (kolatra03@gmail.com)"
     })
 
     session.params.update({
