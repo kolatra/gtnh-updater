@@ -1,15 +1,18 @@
 import platform
 import re
+import shutil
+from pathlib import Path
+import os
 
-from update import *
+from update import update_pack, update_instance_cfg, latest_release
+from installs import MacBookAir, DebianServer
 
 
-def find_existing():
-    gt_instance = re.compile(r"GT New Horizons.*")
+def find_existing() -> str:
     for f in Path(os.getcwd()).iterdir():
-        if gt_instance.search(str(f)) is not None:
+        if re.compile(r"GT New Horizons.*").search(str(f)) is not None:
             print("[*] Instance is prepared for use!")
-            return f
+            return str(f)
 
     print("[+] Downloading and preparing brand new client...")
     client_dl, server_dl = latest_release(beta=True)
@@ -31,7 +34,7 @@ if __name__ == "__main__":
 
     remote_copy = False
 
-    client_path = str(find_existing())
+    client_path = find_existing()
     server_path = str(Path(os.getcwd()) / "mc-data")
     instance_name = client_path.split("\\")[-1]
     instance_cfg_file = client_path + "\\instance.cfg"
@@ -45,8 +48,8 @@ if __name__ == "__main__":
         print("[!] Failed as this version already exists")
 
     if remote_copy:
-        macbook_conn = installs.MacBookAir()
-        server_conn = installs.DebianServer()
+        macbook_conn = MacBookAir()
+        server_conn = DebianServer()
 
         # set instance cfg for macOS
         print("[+] Preparing for macOS copy...")
@@ -56,8 +59,7 @@ if __name__ == "__main__":
         print("[!] Press enter to confirm commands on Titan")
         for cmd in server_conn.commands:
             print("    " + cmd)
-        inp = input()
-        if len(inp) != 0:
+        if len(input()) != 0:
             exit(0)
 
         for cmd in server_conn.commands:

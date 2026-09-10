@@ -6,7 +6,6 @@ from pathlib import Path
 
 import mc_config
 import external_mods
-import installs
 
 def update_pack(client_dl, server_dl):
     client_zip = os.getcwd() + "\\gtnh-client.zip"
