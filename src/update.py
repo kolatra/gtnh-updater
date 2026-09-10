@@ -24,66 +24,36 @@ def update_pack(client_dl, server_dl):
     else:
         print("[*] Server already downloaded")
 
-    client_path = os.getcwd() + "\\GT New Horizons_script"
-    server_path = os.getcwd() + "\\mc-data"
 
-    if os.path.exists(server_path):
-        os.remove(server_path)
-    os.mkdir(server_path)
-
-    print("Extracting client")
+    print("[+] Extracting client")
     with zipfile.ZipFile(client_zip, "r") as zip_ref:
+        top_level_path, = zipfile.Path(zip_ref).iterdir()
+        client_path = top_level_path.name
+        client_path = os.getcwd() + "\\" + client_path
+
+        if os.path.exists(client_path):
+            shutil.rmtree(client_path)
+
         zip_ref.extractall(os.getcwd())
-    print("Extracting server")
+
+    print("[+] Extracting server")
     with zipfile.ZipFile(server_zip, "r") as zip_ref:
+        server_path = os.getcwd() + "\\mc-data"
+
+        if os.path.exists(server_path):
+            shutil.rmtree(server_path)
+        os.mkdir(server_path)
+
         zip_ref.extractall(server_path)
 
-    instance_cfg_file = client_path + "\\instance.cfg"
-    copy_persistent_files(
-        Path(r"C:\Users\tlouk\AppData\Roaming\PrismLauncher\instances\GTNH 2.8 Twist"),
-        Path(client_path)
-    )
+    old_instance = r"C:/Users/tlouk/AppData/Roaming/PrismLauncher/instances/GTNH 2.8 Twist"
+    copy_persistent_files(old_instance, client_path)
     mc_config.update_configs(client_path)
-
-    external_mods.download(client_path, "GTNewHorizons/worldedit-gtnh")
+    external_mods.download(client_path + "\\.minecraft\\", "GTNewHorizons/worldedit-gtnh")
     external_mods.download(server_path, "GTNewHorizons/worldedit-gtnh")
+    external_mods.modrinth_download(client_path + "\\.minecraft\\", "https://api.modrinth.com/v2/project/euphoria-patches/version")
+    external_mods.modrinth_download(client_path + "\\.minecraft\\", "https://api.modrinth.com/v2/project/lglegacy/version")
 
-    # set instance cfg for macOS
-    update_instance_cfg(instance_cfg_file, True)
-    macbook_conn = installs.MacBookAir()
-    macbook_conn.copy_file(client_path, macbook_conn.directory)
-
-    # re-update instance cfg for windows
-    update_instance_cfg(instance_cfg_file, False)
-    print("[+] Copying instance to local Prism...")
-    win_instances_path = Path(r"C:/Users/tlouk/AppData/Roaming/PrismLauncher/instances")
-    shutil.copytree(client_path, win_instances_path)
-
-    # start preparing the server
-    print("[+] Copying config from client to server")
-    shutil.rmtree(server_path + "/config")
-    shutil.rmtree(server_path + "/serverutilities")
-    shutil.copytree(client_path + "/.minecraft" + "/config", server_path + "/config")
-    shutil.copytree(client_path + "/.minecraft" + "/serverutilities", server_path + "/serverutilities")
-
-    server_conn = installs.DebianServer()
-    print("[+] Connecting to server...")
-
-    print("[!] Press enter to confirm these commands on Titan")
-    for cmd in server_conn.commands:
-        print("    " + cmd)
-    inp = input()
-    if len(inp) != 0:
-        return
-
-    for cmd in server_conn.commands:
-        if cmd == "copy-dir":
-            server_conn.copy_file(server_path, server_conn.directory)
-        else:
-            server_conn.run_cmd(cmd)
-
-    print("[*] Complete!")
-    print("[*] Be sure to download: https://modrinth.com/mod/euphoria-patches")
 
 def grab_zip(url: str, filename: str) -> None:
     r = requests.get(url, allow_redirects=True, stream=True)
@@ -119,14 +89,14 @@ def git_latest_daily():
     return client_dl, server_dl
 
 
-def latest_release():
+def latest_release(beta):
     r = requests.get("https://downloads.gtnewhorizons.com/versions.json")
     client_dl = ""
     server_dl = ""
     if r.ok:
         js = r.json()
         for k,release in js.items():
-            if "Beta" in release["title"]:
+            if "beta" in release["title"] and not beta:
                 continue
 
             client_dl = release["mmc"]["java17_2XUrl"]
@@ -140,7 +110,7 @@ def latest_release():
     return client_dl, server_dl
 
 
-def update_instance_cfg(instance_cfg_file: str, macos: bool):
+def update_instance_cfg(instance_cfg_file: str, macos: bool = False):
     all_lines = []
 
     if macos:
@@ -181,12 +151,11 @@ def update_instance_cfg(instance_cfg_file: str, macos: bool):
             ifo.write(arg + '\n')
 
 
-def copy_persistent_files(old_instance: Path, new_instance: Path):
+def copy_persistent_files(old_instance: str, new_instance: str):
     for file in [
         "backups",
         "journeymap",
         "resourcepacks",
-        "saves",
         "schematics",
         "screenshots",
         "shaderpacks",
@@ -201,7 +170,7 @@ def copy_persistent_files(old_instance: Path, new_instance: Path):
         "mods/WorldEditCuiFe-v1.0.7-mf-1.7.10-10.13.4.1566.jar",
         "mods/BetterFoliage-MC1.7.10-2.0.17.jar",
         "mods/DynamicSurroundings-1.7.10-1.0.6.4.jar",
-        "mods/laggoggles-mc1.7.10-4.17.0.jar",
+        "mods/spark-forge1710-1.10-SNAPSHOT.jar",
 
         # Config files that aren't shipped with the pack
         "config/shaders.properties",
@@ -216,8 +185,8 @@ def copy_persistent_files(old_instance: Path, new_instance: Path):
         "config/structurelib.cfg"
     ]:
         file = Path(".minecraft") / Path(file)
-        input_path = old_instance / file
-        output_path = new_instance / file
+        input_path = Path(old_instance) / file
+        output_path = Path(new_instance) / file
         if not os.path.exists(input_path):
             print(f"[!] {input_path} does not exist, skipping.")
             continue

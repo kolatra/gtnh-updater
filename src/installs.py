@@ -47,11 +47,9 @@ class DebianServer(ExternalInstall):
 
         self.commands = [
             "mv /srv/minecraft/gtnh/mc-data/World /srv/minecraft/gtnh/temp-work/World",
-            "mv /srv/minecraft/gtnh/mc-data/dynmap /srv/minecraft/gtnh/temp-work/dynmap",
             f"mv /srv/minecraft/gtnh/mc-data /hdd/personal/gtnh-museum/mc-data-{datetime.now().isoformat()}",
             "copy-dir",
             "mv /srv/minecraft/gtnh/temp-work/World /srv/minecraft/gtnh/mc-data",
-            "mv /srv/minecraft/gtnh/temp-work/dynmap /srv/minecraft/gtnh/mc-data",
-            "sed -i -E 's/ nogui/\\-Dfml.queryResult=confirm nogui/' /srv/minecraft/gtnh/mc-data/startserver-java9.sh"
+            "sed -i -E 's/ nogui/\\ -Dfml.queryResult=confirm nogui/' /srv/minecraft/gtnh/mc-data/startserver-java9.sh",
             "ls -lah /srv/minecraft/gtnh/mc-data"
         ]
