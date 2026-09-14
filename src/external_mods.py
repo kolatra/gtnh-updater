@@ -2,8 +2,9 @@ import requests
 import os
 import re
 
-def download(instance: str, repo: str):
+def gh_download(instance: str, repo: str):
     r = requests.get(f"https://api.github.com/repos/{repo}/releases")
+
     if not r.ok:
         print(r.status_code)
         return
@@ -16,35 +17,19 @@ def download(instance: str, repo: str):
             continue
 
         dl_url = asset["browser_download_url"]
-        jar_req = requests.get(dl_url)
-        if not jar_req.ok:
-            print(f"[!] {dl_url}")
-            return
+        download_jar(instance, dl_url, repo.split("/")[1])
 
-        s = repo.split("/")
-        filename = s[1]
-        mod_path = instance + "\\mods\\" + filename + ".jar"
-        with open(mod_path, "wb") as f:
-            for chunk in jar_req.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    f.flush()
-                    os.fsync(f.fileno())
-        print(f"[+] Downloaded {filename} to {mod_path}")
-
-def modrinth_download(instance: str, url: str):
-    session = requests.Session()
-
-    session.headers.update({
-        "User-Agent": "kolatra/gtnh-updater/0.4 (kolatra03@gmail.com)"
-    })
-
-    session.params.update({
-        "game-version": "[\"1.7.10\"]",
-        "include_changelog": "false"
-    })
-
-    r = session.get(url)
+def modrinth_download(instance: str, mod_id: str):
+    r = requests.get(
+        url = f"https://api.modrinth.com/v2/project/{mod_id}/version",
+        params = {
+            "game-version": "[\"1.7.10\"]",
+            "include_changelog": "false"
+        },
+        headers = {
+            "User-Agent": "kolatra/gtnh-updater/0.1.0 (kolatra03@gmail.com)"
+        }
+    )
 
     if not r.ok:
         print("[!] Error getting version")
@@ -65,15 +50,21 @@ def modrinth_download(instance: str, url: str):
         print("[!] Can't get version")
         return
 
-    session.params.update({})
+    download_jar(instance, dl_url, mod_id, headers = {
+        "User-Agent": "kolatra/gtnh-updater/0.1.0 (kolatra03@gmail.com)"
+    })
 
-    jar_req = session.get(dl_url)
+
+def download_jar(instance: str, dl_url: str, mod_id: str, headers=None):
+    if headers is None:
+        headers = {}
+
+    jar_req = requests.get(url=dl_url, headers=headers)
     if not jar_req.ok:
         print(f"[!] {dl_url}")
         return
 
-    filename = url.split("/")[-2]
-    mod_path = instance + "\\mods\\" + filename + ".jar"
+    mod_path = instance + "\\mods\\" + mod_id + ".jar"
     with open(mod_path, "wb") as f:
         for chunk in jar_req.iter_content(chunk_size=1024):
             if chunk:
@@ -81,5 +72,6 @@ def modrinth_download(instance: str, url: str):
                 f.flush()
                 os.fsync(f.fileno())
 
-    print(f"[+] Downloaded {filename} to {mod_path}")
+    print(f"[+] Downloaded {mod_id} to {mod_path}")
+
 

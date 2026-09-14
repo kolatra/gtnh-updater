@@ -4,8 +4,8 @@ import shutil
 import requests
 from pathlib import Path
 
-import mc_config
-import external_mods
+from mc_config import update_configs
+from external_mods import gh_download, modrinth_download
 
 def update_pack(client_dl, server_dl):
     client_zip = os.getcwd() + "\\gtnh-client.zip"
@@ -45,13 +45,16 @@ def update_pack(client_dl, server_dl):
 
         zip_ref.extractall(server_path)
 
-    old_instance = r"C:/Users/tlouk/AppData/Roaming/PrismLauncher/instances/GTNH 2.8 Twist"
+    old_instance = r"C:/Users/tlouk/AppData/Roaming/PrismLauncher/instances/GT New Horizons 2.9.0-beta-3"
+
+    shutil.copytree(old_instance + "\\.minecraft\\saves\\New World", server_path + "\\World")
     copy_persistent_files(old_instance, client_path)
-    mc_config.update_configs(client_path)
-    external_mods.download(client_path + "\\.minecraft\\", "GTNewHorizons/worldedit-gtnh")
-    external_mods.download(server_path, "GTNewHorizons/worldedit-gtnh")
-    external_mods.modrinth_download(client_path + "\\.minecraft\\", "https://api.modrinth.com/v2/project/euphoria-patches/version")
-    external_mods.modrinth_download(client_path + "\\.minecraft\\", "https://api.modrinth.com/v2/project/lglegacy/version")
+    update_configs(client_path)
+
+    gh_download(client_path + "\\.minecraft\\", "GTNewHorizons/worldedit-gtnh")
+    gh_download(server_path, "GTNewHorizons/worldedit-gtnh")
+    modrinth_download(client_path + "\\.minecraft\\", "euphoria-patches")
+    modrinth_download(client_path + "\\.minecraft\\", "lglegacy")
 
 
 def grab_zip(url: str, filename: str) -> None:
@@ -155,6 +158,7 @@ def copy_persistent_files(old_instance: str, new_instance: str):
         "backups",
         "journeymap",
         "resourcepacks",
+        "saves",
         "schematics",
         "screenshots",
         "shaderpacks",

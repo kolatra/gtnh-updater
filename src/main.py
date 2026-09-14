@@ -15,7 +15,7 @@ def find_existing() -> str:
             return str(f)
 
     print("[+] Downloading and preparing brand new client...")
-    client_dl, server_dl = latest_release(beta=True)
+    client_dl, server_dl = latest_release(beta=False)
     update_pack(client_dl, server_dl)
 
     print("[+] Preparing the server")
@@ -32,8 +32,6 @@ if __name__ == "__main__":
         print(f"[!] {platform.system()}")
         exit(0)
 
-    remote_copy = False
-
     client_path = find_existing()
     server_path = str(Path(os.getcwd()) / "mc-data")
     instance_name = client_path.split("\\")[-1]
@@ -47,24 +45,24 @@ if __name__ == "__main__":
     except FileExistsError:
         print("[!] Failed as this version already exists")
 
-    if remote_copy:
-        macbook_conn = MacBookAir()
-        server_conn = DebianServer()
+    server_conn = DebianServer()
 
-        # set instance cfg for macOS
-        print("[+] Preparing for macOS copy...")
-        update_instance_cfg(instance_cfg_file, True)
-        macbook_conn.copy_file(client_path, macbook_conn.directory)
+    print("[!] Press enter to confirm commands on Titan")
+    for cmd in server_conn.commands:
+        print("    " + cmd)
+    if len(input()) != 0:
+        exit(0)
 
-        print("[!] Press enter to confirm commands on Titan")
-        for cmd in server_conn.commands:
-            print("    " + cmd)
-        if len(input()) != 0:
-            exit(0)
+    for cmd in server_conn.commands:
+        if cmd == "copy-dir":
+            server_conn.copy_file(server_path, server_conn.directory)
+        else:
+            server_conn.run_cmd(cmd)
 
-        for cmd in server_conn.commands:
-            if cmd == "copy-dir":
-                server_conn.copy_file(server_path, server_conn.directory)
-            else:
-                server_conn.run_cmd(cmd)
+    # set instance cfg for macOS
+    print("[+] Preparing for macOS copy...")
+    macbook_conn = MacBookAir()
+    update_instance_cfg(instance_cfg_file, True)
+    macbook_conn.copy_file(client_path, macbook_conn.directory)
+
 
