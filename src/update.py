@@ -2,6 +2,7 @@ import os
 import zipfile
 import shutil
 import requests
+import re
 from pathlib import Path
 
 from mc_config import update_configs
@@ -48,6 +49,14 @@ def update_pack(client_dl, server_dl):
     old_instance = r"C:/Users/tlouk/AppData/Roaming/PrismLauncher/instances/GT New Horizons 2.9.0-beta-3"
 
     shutil.copytree(old_instance + "\\.minecraft\\saves\\New World", server_path + "\\World")
+
+    # Make the server auto accept loading the save with missing block mappings
+    with open(server_path + "\\startserver-java9.sh", "r") as f:
+        script_lines = f.read()
+    with open(server_path + "\\startserver-java9.sh", "w") as f:
+        result = re.sub("-Dfml.readTimeout=180", "-Dfml.readTimeout=180 -Dfml.queryResult=confirm", script_lines)
+        f.write(result)
+
     copy_persistent_files(old_instance, client_path)
     update_configs(client_path)
 

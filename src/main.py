@@ -2,6 +2,7 @@ import platform
 import re
 import shutil
 from pathlib import Path
+from datetime import datetime
 import os
 
 from update import update_pack, update_instance_cfg, latest_release
@@ -46,23 +47,14 @@ if __name__ == "__main__":
         print("[!] Failed as this version already exists")
 
     server_conn = DebianServer()
-
-    print("[!] Press enter to confirm commands on Titan")
-    for cmd in server_conn.commands:
-        print("    " + cmd)
-    if len(input()) != 0:
-        exit(0)
-
-    for cmd in server_conn.commands:
-        if cmd == "copy-dir":
-            server_conn.copy_file(server_path, server_conn.directory)
-        else:
-            server_conn.run_cmd(cmd)
+    server_conn.run_cmd(f"mv /srv/minecraft/gtnh/mc-data /hdd/personal/gtnh-museum/mc-data-{datetime.now().isoformat()}")
+    server_conn.copy_file(server_path, server_conn.directory)
+    server_conn.run_cmd("ls -a /srv/minecraft/gtnh/mc-data")
 
     # set instance cfg for macOS
     print("[+] Preparing for macOS copy...")
     macbook_conn = MacBookAir()
     update_instance_cfg(instance_cfg_file, True)
+    macbook_conn.run_cmd("brew update && brew upgrade")
     macbook_conn.copy_file(client_path, macbook_conn.directory)
-
 

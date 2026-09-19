@@ -1,5 +1,4 @@
 from fabric import Connection, Config
-from datetime import datetime
 import subprocess
 
 class ExternalInstall:
@@ -29,6 +28,7 @@ class ExternalInstall:
             print("[#] Error:", result.stderr)
             print("[#] Exit code:", result.returncode)
 
+
 class MacBookAir(ExternalInstall):
     def __init__(self):
         super().__init__(
@@ -37,6 +37,7 @@ class MacBookAir(ExternalInstall):
             directory="/Users/tyler/Library/Application Support/PrismLauncher/instances"
         )
 
+
 class DebianServer(ExternalInstall):
     def __init__(self):
         super().__init__(
@@ -44,10 +45,3 @@ class DebianServer(ExternalInstall):
             username="tyler",
             directory="/srv/minecraft/gtnh/mc-data"
         )
-
-        self.commands = [
-            f"mv /srv/minecraft/gtnh/mc-data /hdd/personal/gtnh-museum/mc-data-{datetime.now().isoformat()}",
-            "copy-dir",
-            "sed -i -E 's/ nogui/\\ -Dfml.queryResult=confirm nogui/' /srv/minecraft/gtnh/mc-data/startserver-java9.sh",
-            "ls -lah /srv/minecraft/gtnh/mc-data"
-        ]
